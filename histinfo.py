@@ -334,15 +334,3 @@ plt.plot(timep,surgep,'.',color='k')
 plt.show()
 plt.savefig("comparison.png")
 #%%
-
-train = torch.from_numpy(newt).detach().numpy().all()
-test = torch.from_numpy(timetestnew).detach().numpy().all()
-
-print(np.array(torch.from_numpy(newt).detach().numpy().all() == test))
-#print(torch.from_numpy(newt).detach().numpy())
-# %%
-
-#print(timetestnew[-1] == getbranch.on_train_begin([],[])[1][1][-1])
-print(torch.from_numpy(timetestnew).detach().numpy()[-1][0] is getbranch.on_epoch_begin([])[0][1][-1][0])
-# %%
-# %%
