@@ -329,7 +329,7 @@ pred2 = model.predict((wavep,predtime))
 
 
 
-plt.plot(timep,pred2[0],'.',color='r') #output is 500x200, just need one of these rows
+plt.plot(timep,pred2[0],'.',color='r') #output is 1x1x200, just need one of these
 plt.plot(timep,surgep,'.',color='k')
 plt.show()
 plt.savefig("comparison.png")
