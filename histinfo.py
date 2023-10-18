@@ -292,6 +292,7 @@ def historicalapplyfeature(t):
             tp = inputpredtimesignal
             net.apply_feature_transform(regularpass)
             prediction = model.predict((wavep,tp))
+            net.apply_feature_transform(historicalapplyfeature)
             tp = historicalinternalpredict(t,1,prediction)
             tp = torch.from_numpy(tp)
             return(tp)
