@@ -69,7 +69,7 @@ model = dde.Model(data, net)
 model.compile("adam", lr=1e-4)
 
 losshistory, train_state = model.train(iterations=20000)
- 
+ #%%
 
 randseed = np.random.randint(trainno,no)
 data2=pd.read_csv('compressed_data/Compressedata%i.csv'%randseed)

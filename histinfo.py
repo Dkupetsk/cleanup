@@ -50,11 +50,17 @@ for i in range(testno):
 
 time = data.loc[0,:][1:].to_numpy()
 timetest = time
-for i in range(trainno):
-    plt.plot(time,waves[i])
-plt.show()
-for i in range(trainno):
-    plt.plot(time,surges[i])
+#for i in range(trainno):
+    #plt.plot(time,waves[i])
+#plt.show()
+#for i in range(trainno):
+    #plt.plot(time,surges[i])
+
+#plt.show()
+
+#lt.plot(time,waves[0],'.')
+#plt.show()
+#plt.plot(time,surges[0],'.')
 
 #%%
 #Make all zeros the average of the element closest in front of and behind it - filtering
@@ -85,6 +91,10 @@ def takeaverage(funcs,timelim,stretch):
 #waves = takeaverage(waves,199,10)
 #surges = takeaverage(surges,199,10)
 
+#plt.plot(time,waves[0],'.')
+#plt.show()
+#plt.plot(time,surges[0],'.')
+
 #%%
 
 newt = []
@@ -95,8 +105,8 @@ newt = np.array(newt).astype(np.float32)
 timetestnew = []
 for t in timetest:
     timetestnew.append([t])
-timetestnew = np.array(timetestnew).astype(np.float64) #Change datatype to mark later on
-
+timetestnew[-1][0] = timetestnew[-1][0] + .0001
+timetestnew = np.array(timetestnew).astype(np.float32) #Change datatype to mark later on
 
 #%%
 wavel = np.array(waves).astype(np.float32)
@@ -108,7 +118,7 @@ y_train = surges.astype(np.float32)
 
 x_train = (wavel.astype(np.float32),newt.astype(np.float32))
 
-x_test = (wavestest.astype(np.float32),timetestnew.astype(np.float64))
+x_test = (wavestest.astype(np.float32),timetestnew.astype(np.float32))
 
 y_test = np.array(surgestest.astype(np.float32))
 # %%
@@ -148,50 +158,69 @@ for i, row in enumerate(rows):
 #%%
 import cProfile
 #We can use cProfile to track what takes the most time during training.
+#Implementing callbacks for later detection if incoming data is train or test
+#Also for future predictions
 
+class callbacks(dde.callbacks.Callback):
+    def __init__(self):
+        super().__init__()
+    
+    def on_epoch_begin(a1, self):
+        return [model.data.train_x, model.data.test_x]
+
+        
+
+callbacks = callbacks()
+
+trainindicator = callbacks.on_epoch_begin([])[0][1][-1][0]
+testindicator = callbacks.on_epoch_begin([])[1][1][-1][0]
 """
 This is to be cleaned up later, but right now it works.
 
 historicalinternaltrain - takes in the training timepoints and creates corresponding historical surge dataset
 historicalinternaltest - same as above but for the test dataset
 historicalinternalpredict - same as above but for prediction
-(these above three do pretty much the same thing with the only difference being which surge dataset to use)
-(for future cleanup, these three could probably be one function)
+(these above three do pretty much the same thing with the only difference being which surge dataset to use and the amount of training data)
+(the first two are now just under the "historical" function)
 
-historical - used to create the training and testing dataset, basically just calls one if type is float64 and the other if float32
+historical - used to create the training and testing dataset, basically creates the objects train_t and test_t depending on if the incoming time data is train or test
+*the way that the two can be differentiated is the last element being .0001 more than the other. This hopefully should not affect training too much.
+
 historicalapplyfeature - what is actually used for the feature transform:
 if train, sets input to the training feature transform. If test, sets input to testing feature transform.
-if predict, set the input as the initial wave elevation data, predict the output, then use that data to make future predictions.
+if predict, set the input as the initial wave elevation data, predict the output, then use that data to make future predictions. Still working on this part
 """
-def historicalinternaltrain(t,notimeseries):
-    tp = np.ravel(t)
-    tp3d = []
-    for i in range(notimeseries):
-        tp3d.append(np.pad(tp[...,np.newaxis], ((0,0),(0,5)),mode='constant',constant_values=0))
-    tp3d = np.array(tp3d)
-    for j in range(notimeseries):
-        for pair in rcvec:
-                p1,p2 = pair
-                if p2 != 0:
-                    tp3d[j][p1][p2] = surges[j][p1 - p2]
-    return tp3d
+# def historicalinternaltrain(t,notimeseries):
+#     tp = np.ravel(t)
+#     tp3d = []
+#     for i in range(notimeseries):
+#         tp3d.append(np.pad(tp[...,np.newaxis], ((0,0),(0,5)),mode='constant',constant_values=0))
+#     tp3d = np.array(tp3d)
+#     for j in range(notimeseries):
+#         for pair in rcvec:
+#                 p1,p2 = pair
+#                 if p2 != 0:
+#                     tp3d[j][p1][p2] = surges[j][p1 - p2]
+#     return tp3d
 
-def historicalinternaltest(t,notimeseries):
-    tp = np.ravel(t)
-    tp3d = []
-    for i in range(notimeseries):
-        tp3d.append(np.pad(tp[...,np.newaxis], ((0,0),(0,5)),mode='constant',constant_values=0))
-    tp3d = np.array(tp3d)
-    for j in range(notimeseries):
-        for pair in rcvec:
-                p1,p2 = pair
-                if p2 != 0:
-                    tp3d[j][p1][p2] = surgestest[j][p1 - p2]
-    return tp3d
+# def historicalinternaltest(t,notimeseries):
+#     tp = np.ravel(t)
+#     tp3d = []
+#     for i in range(notimeseries):
+#         tp3d.append(np.pad(tp[...,np.newaxis], ((0,0),(0,5)),mode='constant',constant_values=0))
+#     tp3d = np.array(tp3d)
+#     for j in range(notimeseries):
+#         for pair in rcvec:
+#                 p1,p2 = pair
+#                 if p2 != 0:
+#                     tp3d[j][p1][p2] = surgestest[j][p1 - p2]
+#     return tp3d
 
 
 def historicalinternalpredict(t,notimeseries,predictiondataset):
-    tp = np.ravel(t)
+    tp = t
+    tp = tp.detach().numpy()
+    tp = np.ravel(tp)
     tp3d = []
     for i in range(notimeseries):
         tp3d.append(np.pad(tp[...,np.newaxis], ((0,0),(0,5)),mode='constant',constant_values=0))
@@ -204,44 +233,77 @@ def historicalinternalpredict(t,notimeseries,predictiondataset):
     return tp3d
 
 
-def historical(t,**kwargs):
-    tp = t.detach().numpy()
-    if isinstance(tp[0][0],np.float64):
-        tp3d = historicalinternaltest(tp,testno)
-        print('success')
+def historical(t):
+    tp = t
+    if tp[-1][0] == trainindicator:
+        #Optionally, this whole section could be replaced with historicalinternaltrain(tp,trainno)
+        tp = np.ravel(tp)
+        tp3d = []
+        for i in range(trainno):
+            tp3d.append(np.pad(tp[...,np.newaxis], ((0,0),(0,5)),mode='constant',constant_values=0))
+        tp3d = np.array(tp3d)
+        for j in range(trainno):
+            for pair in rcvec:
+                    p1,p2 = pair
+                    if p2 != 0:
+                        tp3d[j][p1][p2] = surges[j][p1 - p2]
+        return(tp3d)
+
     else:
-        tp3d = historicalinternaltrain(tp,trainno)
-    tp3d = torch.from_numpy(tp3d)
-    return(tp3d)
+        if tp[-1][0] == testindicator:
+            #Optionally, this whole section could be replaced with historicalinternaltest(tp,testno)
+            tp = np.ravel(tp)
+            tp3d = []
+            for i in range(testno):
+                tp3d.append(np.pad(tp[...,np.newaxis], ((0,0),(0,5)),mode='constant',constant_values=0))
+            tp3d = np.array(tp3d)
+            for j in range(testno):
+                for pair in rcvec:
+                        p1,p2 = pair
+                        if p2 != 0:
+                            tp3d[j][p1][p2] = surgestest[j][p1 - p2]
+            print('successfully detected test time data')
+        return(tp3d)
 
-newt2 = historical(torch.from_numpy(newt)).numpy().astype(np.float32)
-timetestnew2 = historical(torch.from_numpy(timetestnew)).numpy().astype(np.float32)
+train_t = historical(newt).astype(np.float32)
+test_t = historical(timetestnew).astype(np.float32)
 
-inputpredtimesignal = np.array([np.pad(newt,((0,0),(0,5)),mode='constant',constant_values=0)]).astype(np.float16)
+inputpredtimesignal = np.array([np.pad(newt,((0,0),(0,5)),mode='constant',constant_values=0)]).astype(np.float32)
+
+
+
+def regularpass(t):
+    return t
+
 
 def historicalapplyfeature(t):
     tp = t.detach().numpy()
-    if isinstance(tp[0][0], np.float64):
-        tp = timetestnew2
-    if isinstance(tp[0][0], np.float32):
-        tp = newt2
-    if isinstance(tp[0][0], np.float16):
-        global wavep
-        tp = inputpredtimesignal
-        prediction = model.predict((wavep,tp))
-        tp = historicalinternalpredict(t,0,prediction)
-    tp = torch.from_numpy(tp)
-    return tp
-
+    if tp[-1][0] == trainindicator:
+        tp = train_t
+        tp = torch.from_numpy(tp)
+        return(tp)
+    else:
+        if tp[-1][0] == testindicator:
+            tp = test_t
+            tp = torch.from_numpy(tp)
+            return(tp)
+        else:
+            global wavep
+            tp = inputpredtimesignal
+            net.apply_feature_transform(regularpass)
+            prediction = model.predict((wavep,tp))
+            tp = historicalinternalpredict(t,1,prediction)
+            tp = torch.from_numpy(tp)
+            return(tp)
 
 
 #%%
 net.apply_feature_transform(historicalapplyfeature)
-
+#%%
 model.compile('adam', lr=1e-4)
 #pr = cProfile.Profile()
 #pr.enable()
-losshistory, train_state = model.train(iterations=100000,display_every=1)
+losshistory, train_state = model.train(iterations=40000,display_every=1)
 #pr.disable()
 #%%
 #import pstats
@@ -249,12 +311,19 @@ losshistory, train_state = model.train(iterations=100000,display_every=1)
 #ps = pstats.Stats(pr).sort_stats(sortby)
 #ps.print_stats()
 #%%
-datap = pd.read_csv('compressed_data/Compressedata%i.csv'%501)
+datap = pd.read_csv('compressed_data/Compressedata%i.csv'%1000)
 wavep = np.array([datap.loc[1,:][1:].to_numpy()])
 surgep = datap.loc[2,:][1:].to_numpy()
 timep = datap.loc[0,:][1:].to_numpy()
 
-pred2 = model.predict((wavep,newt.astype(np.float16)))
+predtime = []
+for t in timep:
+    predtime.append([t])
+predtime = np.array(predtime).astype(np.float32)
+
+predtime[-1][0] = predtime[-1][0] - .0001
+
+pred2 = model.predict((wavep,predtime))
 
 #%%
 
@@ -264,3 +333,16 @@ plt.plot(timep,pred2[0],'.',color='r') #output is 500x200, just need one of thes
 plt.plot(timep,surgep,'.',color='k')
 plt.show()
 plt.savefig("comparison.png")
+#%%
+
+train = torch.from_numpy(newt).detach().numpy().all()
+test = torch.from_numpy(timetestnew).detach().numpy().all()
+
+print(np.array(torch.from_numpy(newt).detach().numpy().all() == test))
+#print(torch.from_numpy(newt).detach().numpy())
+# %%
+
+#print(timetestnew[-1] == getbranch.on_train_begin([],[])[1][1][-1])
+print(torch.from_numpy(timetestnew).detach().numpy()[-1][0] is getbranch.on_epoch_begin([])[0][1][-1][0])
+# %%
+# %%
