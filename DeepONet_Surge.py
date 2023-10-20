@@ -9,8 +9,8 @@ import scipy as sp
 import pandas as pd
 
 no = 561580795 - 561579726
-trainno = 72
-testno = 15
+trainno = 500
+testno = 20
 
 waves = []
 surges = []
@@ -72,7 +72,7 @@ losshistory, train_state = model.train(iterations=20000)
  #%%
 
 randseed = np.random.randint(trainno,no)
-data2=pd.read_csv('compressed_data/Compressedata%i.csv'%randseed)
+data2=pd.read_csv('compressed_data/Compressedata%i.csv'%1000)
 wavel2 = data2.loc[1,:][1:].to_numpy()
 time2 = data2.loc[0,:][1:].to_numpy()
 surge2 = data2.loc[2,:][1:].to_numpy()
@@ -91,7 +91,7 @@ plt.plot(time,pred,'r')
 
 error = np.square(np.subtract(surge2,pred)).mean()
 print('Mean squared error of %f'%error)
-plt.savefig('comparison.png')
+plt.savefig('comparison_vanilla.png')
 
  # %%
 
@@ -125,6 +125,6 @@ plt.plot(time,pred,'r')
 
 error = np.square(np.subtract(surge2,pred)).mean()
 print('Mean squared error of %f'%error)
-plt.savefig('comparison.png')
+plt.savefig('comparison_vanilla.png')
 
 # %%

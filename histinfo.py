@@ -35,6 +35,7 @@ surgestest = []
 for i in range(trainno):
     data = pd.read_csv('compressed_data/Compressedata%i.csv'%i)
     wave = data.loc[1,:][1:].to_numpy()
+    wave = wave/.1
     surge = data.loc[2,:][1:].to_numpy()
     surgecopy = surge.copy()
     wave[indices] = 0
@@ -45,7 +46,7 @@ for i in range(trainno):
     
 for i in range(testno):
     data = pd.read_csv('compressed_data/Compressedata%i.csv'%(i+trainno))
-    wavestest.append(data.loc[1,:][1:].to_numpy()) 
+    wavestest.append(data.loc[1,:][1:].to_numpy()/.1)
     surgestest.append(data.loc[2,:][1:].to_numpy())
 
 time = data.loc[0,:][1:].to_numpy()
@@ -268,7 +269,8 @@ def historical(t):
 train_t = historical(newt).astype(np.float32)
 test_t = historical(timetestnew).astype(np.float32)
 
-inputpredtimesignal = np.array([np.pad(newt,((0,0),(0,5)),mode='constant',constant_values=0)]).astype(np.float32)
+
+
 
 
 
@@ -289,6 +291,7 @@ def historicalapplyfeature(t):
             return(tp)
         else:
             global wavep
+            global initial_data
             tp = inputpredtimesignal
             net.apply_feature_transform(regularpass)
             prediction = model.predict((wavep,tp))
@@ -304,7 +307,7 @@ net.apply_feature_transform(historicalapplyfeature)
 model.compile('adam', lr=1e-4)
 #pr = cProfile.Profile()
 #pr.enable()
-losshistory, train_state = model.train(iterations=40000,display_every=1)
+losshistory, train_state = model.train(iterations=300,display_every=1)
 #pr.disable()
 #%%
 #import pstats
@@ -313,16 +316,29 @@ losshistory, train_state = model.train(iterations=40000,display_every=1)
 #ps.print_stats()
 #%%
 datap = pd.read_csv('compressed_data/Compressedata%i.csv'%1000)
-wavep = np.array([datap.loc[1,:][1:].to_numpy()])
+wavep = np.array([datap.loc[1,:][1:].to_numpy()])/.1
 surgep = datap.loc[2,:][1:].to_numpy()
 timep = datap.loc[0,:][1:].to_numpy()
-
 predtime = []
 for t in timep:
     predtime.append([t])
 predtime = np.array(predtime).astype(np.float32)
 
 predtime[-1][0] = predtime[-1][0] - .0001
+
+initial_data = wavep[0][0:4]
+
+inputpredtimesignal = np.array([np.pad(predtime,((0,0),(0,5)),mode='constant',constant_values=0)]).astype(np.float32)
+#%%
+for pair in rcvec[0:14]:
+    p1, p2 = pair
+    if (p1 - p2 >= len(initial_data) and p2 != 0):
+        inputpredtimesignal[0][p1][p2] = 0
+    if p2 != 0:
+        inputpredtimesignal[0][p1][p2] = initial_data[p1 - p2]
+
+print(inputpredtimesignal)
+#%%
 
 pred2 = model.predict((wavep,predtime))
 
@@ -335,3 +351,19 @@ plt.plot(timep,surgep,'.',color='k')
 plt.show()
 plt.savefig("comparison.png")
 #%%
+hello = np.append(initial_data,1)
+print(hello)
+# %%
+#  for i in range(len(tp[0]) - 4):
+#                 prediction = model.predict((wavep,tp))
+#                 print(prediction)
+#                 nexttimesignal = prediction[0][i + 4]
+#                 initial_data = np.append(initial_data,nexttimesignal)
+#                 for pair in rcvec:
+#                     p1, p2 = pair
+#                     if p1 - p2 > len(initial_data):
+#                         inputpredtimesignal[0][p1][p2] = 0
+#                     if p2 != 0 and p1 - p2 <= len(initial_data):
+#                         inputpredtimesignal[0][p1][p2] = initial_data[p1 - p2 - 1]
+#                 tp = inputpredtimesignal
+#             print(tp)
