@@ -35,7 +35,7 @@ surgestest = []
 for i in range(trainno):
     data = pd.read_csv('compressed_data/Compressedata%i.csv'%i)
     wave = data.loc[1,:][1:].to_numpy()
-    wave = wave/.1
+    wave = wave
     surge = data.loc[2,:][1:].to_numpy()
     surgecopy = surge.copy()
     wave[indices] = 0
@@ -46,7 +46,7 @@ for i in range(trainno):
     
 for i in range(testno):
     data = pd.read_csv('compressed_data/Compressedata%i.csv'%(i+trainno))
-    wavestest.append(data.loc[1,:][1:].to_numpy()/.1)
+    wavestest.append(data.loc[1,:][1:].to_numpy())
     surgestest.append(data.loc[2,:][1:].to_numpy())
 
 time = data.loc[0,:][1:].to_numpy()
@@ -307,7 +307,7 @@ net.apply_feature_transform(historicalapplyfeature)
 model.compile('adam', lr=1e-4)
 #pr = cProfile.Profile()
 #pr.enable()
-losshistory, train_state = model.train(iterations=300,display_every=1)
+losshistory, train_state = model.train(iterations=900,display_every=1)
 #pr.disable()
 #%%
 #import pstats
@@ -316,7 +316,7 @@ losshistory, train_state = model.train(iterations=300,display_every=1)
 #ps.print_stats()
 #%%
 datap = pd.read_csv('compressed_data/Compressedata%i.csv'%1000)
-wavep = np.array([datap.loc[1,:][1:].to_numpy()])/.1
+wavep = np.array([datap.loc[1,:][1:].to_numpy()])
 surgep = datap.loc[2,:][1:].to_numpy()
 timep = datap.loc[0,:][1:].to_numpy()
 predtime = []
@@ -326,7 +326,7 @@ predtime = np.array(predtime).astype(np.float32)
 
 predtime[-1][0] = predtime[-1][0] - .0001
 
-initial_data = wavep[0][0:4]
+initial_data = surgep[0:4]
 
 inputpredtimesignal = np.array([np.pad(predtime,((0,0),(0,5)),mode='constant',constant_values=0)]).astype(np.float32)
 #%%
