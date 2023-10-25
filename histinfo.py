@@ -349,6 +349,7 @@ pred2 = model.predict((wavep,predtime))
 plt.plot(timep,pred2[0],'.',color='r') #output is 1x1x200, just need one of these
 plt.plot(timep,surgep,'.',color='k')
 plt.show()
+print('The MSE error is %f'%(np.square(pred2[0] - surgep)).mean(axis=0))
 plt.savefig("comparison.png")
 #%%
 hello = np.append(initial_data,1)
